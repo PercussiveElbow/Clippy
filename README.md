@@ -1,2 +1,3 @@
 # PrivEsc-Clippy
-PrivEsc enumeration script for Windows systems
+Terribad PrivEsc enumeration script for Windows systems
+WIP
