@@ -13,9 +13,10 @@ Work In Progress
 		    || ||
 		    |\_/|
 		    \___/
-	                    
-Usage: clippy.exe
-clippy.exe enum            - Performs  enumeration
-clippy.exe enum report     - Performs enumeration and saves report to disk
-clippy.exe download [url]  - Downloads a file from given URL 
-clippy.exe hax             - Creates new admin, enables RDP, disables firewall (CTF Orientated)
+
+Command | Info
+------------ | -------------                    
+clippy.exe enum          | Performs  enumeration
+clippy.exe enum report   | Performs enumeration and saves report to disk
+clippy.exe download [url]| Downloads a file from given URL 
+clippy.exe hax           | Creates new admin, enables RDP, disables firewall (CTF Orientated)
