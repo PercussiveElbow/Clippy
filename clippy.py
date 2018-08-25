@@ -12,7 +12,7 @@ def print_banner(title):
 def system_call(command):
 	process = subprocess.Popen(command,stdout=subprocess.PIPE, stderr=subprocess.PIPE,shell=True)
 	(stdout, stderr) = process.communicate()
-	stdout = stdout.decode("utf-8")
+	stdout = stdout.decode("utf-8",'ignore')
 	print(stdout)
 	global report
 	report += "\n" + stdout
@@ -27,13 +27,22 @@ def list_dir(path):
 	global report
 	report += "\n" + dir_string
 
-def determine_os_ver(): # STUB
-	#ver_string.splitlines()[1]
-	return "Not yet Implemented"
+def determine_os_ver(ver_string): #stop coding on 2 hours sleep
+	final_ver = ""
+	sp = ""
+	groups =  re.search("/\w+$/|2000|XP|Vista|7|8\.1|8|10|Server 2003|Server 2008|Server 2012|Server 2016",ver_string.splitlines()[0]) # catch os version
+	if groups:
+		final_ver = groups.group(0)
+	groups = ""
+	groups = re.search('(?:^|\W)Service Pack [0-4](?:$|\W)',ver_string.splitlines()[1]) # catch sp ver
+	if groups:
+		sp = " SP" + str(int("".join(filter(str.isdigit,groups.group(0)))))
+	print("Detected OS Version: " + final_ver + sp + "Warning: buggy!")
+	return(final_ver + sp)
 
-def kb_search(kbs):
-	print_banner("OS Ver Possible Exploits (Not yet implemented)")
-	os = determine_os_ver()
+def kb_search(kbs,ver_string):
+	print_banner("OS/SP/KB Versions Possible Exploits")
+	os = determine_os_ver(ver_string)
 	vulns = [ 
 		["MS04-019",["2000 SP3","2000 SP4"],"KB842526"],
 		["MS04-011",["2000 SP2","2000 SP3","2000 SP4","XP","XP SP1"],"KB835732"],
@@ -66,8 +75,13 @@ def kb_search(kbs):
 	for vuln in vulns:
 		if os in vuln[1] and vuln[2] not in kbs:
 			compat.append(vuln)
-	for vuln in compat:
-		print(vuln[0])
+	if compat:
+		print("Possible exploits found for OS/SP/KB combination:")
+		for vuln in compat:
+			print(vuln[0])
+	else:
+		print("No exploits found for OS/SP/KB combination\n")
+
 
 def save_report():
 	text_file = open("clippy_report_" + str(datetime.datetime.now()).replace(":","_").replace(" ","_").replace(".","_") + ".txt", "w")
@@ -75,7 +89,7 @@ def save_report():
 	text_file.close()
 
 def greeting():
-	greetings = ["escalate privileges","hack the planet"]
+	greetings = ["escalate privileges","hack the planet","hack UNATCO","hack the Gibson","create a GUI interface in Visual Basic to see if you can track an IP address"]
 	greeting = "I see you're trying to " + random.choice(greetings) + ", would you like some help with that?"
 	print("""\
 	< {0} >
@@ -96,7 +110,7 @@ def usage():
 def enum():
 	print_banner("BASIC OS INFO")
 	system_call('ver')
-	system_call('systeminfo | findstr /B /C:"OS Name" /C:"OS Version"')
+	ver_string = system_call('systeminfo | findstr /B /C:"OS Name" /C:"OS Version"')
 	system_call('hostname')
 	system_call('net config Workstation')
 
@@ -158,7 +172,7 @@ def enum():
 	list_dir(Path(os.getenv('LOCALAPPDATA')))
 
 	print_banner("WMIC: Installed Patches")
-	kb_search(re.findall (r'\b[KB]\w+', system_call("wmic qfe get Caption,Description,HotFixID,InstalledOn")))
+	kb_search(re.findall (r'\b[KB]\w+', system_call("wmic qfe get Caption,Description,HotFixID,InstalledOn")),ver_string)
 
 	print_banner("WMIC: Unquoted Service Paths")
 	system_call('wmic service get name,displayname,pathname,startmode |findstr /i "Auto" |findstr /i /v "C:\Windows\\" |findstr /i /v """"')
