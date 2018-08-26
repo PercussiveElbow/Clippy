@@ -1,18 +1,18 @@
 # PrivEsc-Clippy
 Terribad PrivEsc enumeration script for Windows systems
-Work In Progress
 
 ## Usage
 
 	< I see you're trying to escalate privileges, would you like some help with that? >
 		     __
-		    /  		    |  |
+		    /  \
+		    |  |
 		    @  @
 		    |  |
 		    || |/
 		    || ||
 		    |\_/|
-		    \___/
+		    \___/ 
 
 Command | Info
 ------------ | -------------                    
